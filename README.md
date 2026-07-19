@@ -1,0 +1,291 @@
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png">
+    <img src="assets/logo-light.png" alt="Forge logo: örn, a flame-feathered eagle rising from an anvil" width="480">
+  </picture>
+
+  # Forge
+
+  **An autonomous development system for Claude Code — queue-driven, adversarially verified, self-improving.**
+
+  ![version](https://img.shields.io/badge/version-0.14.0-orange)
+  ![tests](https://img.shields.io/badge/tests-1300%2B-brightgreen)
+</div>
+
+## What it is
+
+<div align="center">
+  <img src="assets/banner-terminal.png" alt="Forge startup banner: örn the phoenix on the anvil, rendered in the terminal" width="360">
+  <br>
+  <sub><i>The örn banner is an opt-in launcher shim — run <code>/forge:banner install</code>; it is not automatic. A session-start hook's output becomes model context, not terminal output, so nothing paints this without the shim installed — once it is, it prints before <code>claude</code> hands off to the real CLI.</i></sub>
+</div>
+
+
+Forge is a Claude Code plugin: a markdown-defined work queue, a stateless
+kernel orchestration loop, and a routed roster of twenty-three agents that plan,
+build, and adversarially check work against acceptance criteria. Markdown is
+the system — `.forge/` task/spec/memory files are the source of truth — and
+the Python tools under `tools/` are accelerators, not requirements. New
+features route through one human approval gate (the spec pipeline); routine
+work is dispatched, verified, and integrated without a human in the loop
+until the next thing needs a decision.
+
+| | |
+|---|---|
+| **Kernel loop** | SYNC → PULL → PLAN → GATE → ROUTE+DISPATCH → VERIFY → INTEGRATE → LEARN, looping until the queue is empty or a budget cap hits |
+| **Adversarial verification** | Three modes — gates-inline (trivial), a separate verifier spawn at equal-or-higher model tier (standard/full, with a low-risk sub-tier for docs/config-only diffs), and kernel synthesis for read-only report tasks |
+| **Parallel waves** | Same-wave tasks with non-overlapping scope dispatch concurrently in isolated git worktrees; a sliding window opens the next slot the moment one frees, instead of waiting on a fixed batch |
+| **Spec pipeline** | Brainstorm → EARS acceptance criteria → **one human approval gate** → decomposition into linked queue tasks |
+| **Trust boundary** | A cloned or forked `.forge/` is untrusted until a human or a first-party Forge action confirms it — local trust-on-first-use, never portable inside the repo |
+| **Persistent memory** | Project-scoped facts (`.forge/memory/`) plus a project-agnostic craft-memory store shipped with the plugin — decisions, gotchas, and postmortems, never deleted, only superseded |
+| **45 skills · 23 agents · 20 commands** | A curated library covering orchestration, frontend/animation, backend/data, and legal/compliance craft |
+| **Workflow executor** | Parallel-eligible waves and full-tier ship reviews run as deterministic scripts when the harness offers the Workflow tool — identical `.forge/` state transitions either way |
+| **Express lane** | Standard-tier ideas skip the full spec pipeline via one structured confirm card; full-tier work always takes the human gate |
+
+Depth on each of these lives in [`docs/`](docs/): the
+[architecture deep-dive](docs/architecture.md) (kernel loop + spec pipeline,
+both as full diagrams), [queue format + EARS](docs/features/queue-and-ears.md),
+[verification economics + the finding filter](docs/features/verification-economics.md)
+(real cost numbers, not marketing), [sharded fan-out](docs/features/sharded-fan-out.md),
+[design foundation + Iris elevation](docs/features/design-foundation.md),
+[the inquest tribunal](docs/features/inquest.md),
+[memory + the craft store](docs/features/memory.md),
+[the trust model](docs/features/trust-model.md),
+[telemetry + Evolve](docs/features/telemetry-and-evolve.md),
+[the update system](docs/features/update-system.md),
+[the full agent roster](docs/features/roster.md), and the
+[configuration reference](docs/features/configuration.md).
+
+## Architecture
+
+```mermaid
+flowchart TD
+    SPEC["/forge:spec<br/>EARS criteria · ONE human approval gate"] -.->|"decomposed, linked tasks"| PULL
+
+    SYNC["SYNC<br/>charter · trust gate · crash recovery"] --> PULL["PULL<br/>compute wave · claim tasks"]
+    PULL --> PLAN["PLAN<br/>execution plan per task"]
+    PLAN --> GATE["GATE<br/>inline · delegate · parallel-eligible"]
+    GATE --> DISPATCH["ROUTE + DISPATCH<br/>explicit model + effort · sliding window · isolated worktrees"]
+    DISPATCH --> WORK["Brokk + routed roster<br/>one well-specified task each"]
+    WORK --> VERIFY{"VERIFY<br/>judge ≠ author"}
+
+    VERIFY -->|"trivial diff"| GI["gates inline"]
+    VERIFY -->|"standard / full"| VJ["Vera · Iris — adversarial verifier<br/>tier ≥ author · low-risk sub-tier for pin-covered docs"]
+    VERIFY -->|"full-tier ship"| SR["Rook · Aegis · Lex<br/>parallel review fan-out"]
+    VERIFY -->|"report task"| KS["kernel synthesis<br/>from finder outputs"]
+
+    VJ -->|"FAIL — kernel filters findings first<br/>MECHANICAL → haiku bounce · JUDGMENT → original tier"| DISPATCH
+    SR -->|"FAIL"| DISPATCH
+    GI --> INTEGRATE["INTEGRATE<br/>single-gate batch · bisect on failure · commit"]
+    VJ -->|"PASS"| INTEGRATE
+    SR -->|"PASS"| INTEGRATE
+    KS --> INTEGRATE
+
+    INTEGRATE --> LEARN["LEARN<br/>memory promotion, bleed-checked<br/>telemetry → UNRATIFIED routing recommendations"]
+    LEARN -->|"queue not empty"| PULL
+    LEARN -->|"empty queue · budget cap"| STOP(["report + stop"])
+
+    classDef kernel stroke:#e8590c,stroke-width:2px;
+    classDef judge stroke:#7048e8,stroke-width:2px;
+    classDef human stroke:#1971c2,stroke-width:2px,stroke-dasharray:4;
+    classDef done stroke:#2f9e44,stroke-width:2px;
+    class SYNC,PULL,PLAN,GATE,DISPATCH,INTEGRATE,LEARN kernel;
+    class VERIFY,GI,VJ,SR,KS judge;
+    class SPEC human;
+    class STOP done;
+```
+
+The loop reads top to bottom: work enters through the spec pipeline's single
+human gate (or `/forge:add` for routine tasks), builders never judge their
+own diffs, failed verdicts are themselves spot-checked by the kernel before
+they can bounce a build, and every bounce is routed by failure type —
+mechanical fixes go to the cheapest tier, judgment calls return to the tier
+that made them. What the loop learns feeds telemetry, and telemetry's
+routing recommendations stay UNRATIFIED until a human approves them through
+the spec pipeline.
+
+## The roster
+
+Twenty-three routed agents, each spawned by the kernel with an explicit
+model and effort. Seven are judges — read-only, never edit.
+
+| Persona | Slug | Role |
+|---|---|---|
+| Brokk | `forge-worker` | Implements one well-specified queue task from a kernel spawn contract |
+| Vera | `forge-verifier` | Adversarially verifies a diff against its EARS criteria, gates, and the constitution |
+| Iris | `forge-ui-verifier` | Verifies UI/animation output visually — renders and observes, never re-reads code |
+| Rook | `forge-reviewer` | Full-tier code review: correctness, silent failures, simplification |
+| Aegis | `forge-security` | Security review for auth, input handling, secrets, and payment flows |
+| Lex | `forge-legal` | Engineering-side license/ToS/compliance checks — judges only, never drafts legal documents |
+| Blue | `forge-architect` | Designs the approach and execution plan for complex or ambiguous tasks |
+| Hex | `forge-debugger` | Roots out one bug via hypothesis→evidence→fix, ships a regression test |
+| Pixel | `forge-ui` | Implements frontend/UI work with accessibility and Core Web Vitals built in |
+| Flux | `forge-animator` | Implements motion and animation to the project's design system |
+| Tess | `forge-test-writer` | Writes or repairs tests, closing coverage gaps with a right-sized test pyramid |
+| Sage | `forge-researcher` | Researches docs/web/codebase, returns a distilled implementation brief |
+| Tern | `forge-migrator` | Executes mechanical sweeps — renames, codemods, dependency bumps, formatting |
+| Scout | `forge-scout` | Discovers and vets skills/MCP servers/CLIs — proposes, never installs |
+| Atlas | `forge-mapper` | Builds or refreshes the repo map (`.forge/map/`) |
+| Page | `forge-librarian` | Consolidates memory, checks map freshness, queue hygiene — off the critical path |
+| Quill | `forge-spec-writer` | Drafts a brainstormed idea into an approvable spec with EARS criteria |
+| Doc | `forge-triage` | Bug intake — reproduces, classifies, drafts a ready task |
+| Rune | `forge-data` | Owns one database task — schema design, migration, or query tuning |
+| Grud | `forge-grunt` | Executes fully-specified, zero-judgment bulk work at haiku/low — refuses and bounces back when a judgment call is needed |
+| Hound | `forge-finder` | Maximalist inquest-tribunal FINDER — proposes every plausible defect/gap it can support, never pre-filters |
+| Foil | `forge-refuter` | Inquest-tribunal REFUTER — attacks one finding at a time, runs reproductions when possible |
+| Gavel | `forge-judge` | Inquest-tribunal JUDGE — weighs the full FINDER+REFUTER record, routes each finding to CONFIRMED/DISMISSED/UNRESOLVED |
+
+The kernel itself introduces its session reports and run charters under a
+twenty-fourth persona, **örn** — the orchestrator is not backed by an
+`agents/*.md` file.
+
+Routing-tier defaults and who-verifies-whom for every row above:
+[`docs/features/roster.md`](docs/features/roster.md).
+
+## Quickstart
+
+1. Install: `claude plugin marketplace add /d/forge` then
+   `claude plugin install forge@orns-forge`.
+   - On **Windows Git Bash**, use the POSIX forward-slash source `/d/forge`
+     — the backslash form (`D:\forge`) fails with
+     `Invalid marketplace source format`.
+   - **Installed from inside an already-running Claude Code session**
+     (including by asking Claude itself to run the two commands above)?
+     The new plugin's skills/agents/commands/hooks stay invisible to that
+     session until you type `/reload-plugins` yourself — it's a built-in
+     CLI command with no manifest field or hook that can trigger it
+     automatically, so Claude cannot run it for you. Installing from a
+     fresh terminal *before* launching `claude` skips this step entirely:
+     a newly-started session picks up an already-installed plugin on its
+     own.
+2. In the target repo, run `/forge:onboard` — initializes `.forge/`, builds
+   the repo map, seeds `.forge/constitution.md`, resolves gate commands,
+   runs a scout pass (proposes only, installs nothing), and generates a
+   root `AGENTS.md`.
+3. Brainstorm a feature into an approvable spec: `/forge:spec "<idea>"`.
+4. Work the queue: `/forge:start`.
+5. Check progress any time: `/forge:status`.
+
+With `natural-language-invocation: on` (the default), most of this also
+fires from plain conversation instead of slash commands — see below.
+
+## Install from the public mirror
+
+The steps above assume a local dev checkout of the private working repo. If
+you're a public user installing a released version instead, add the
+[public mirror](docs/releasing.md) as a marketplace and install from it:
+
+```
+claude plugin marketplace add BenMacDeezy/Orns-Forge
+claude plugin install forge@orns-forge
+```
+
+The mirror is a filtered, tagged snapshot of each release, cut from the
+private repo by `tools/release.py`; it never receives direct pushes.
+Contributing to Forge itself, rather than just installing it, is a separate
+path — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the local-clone
+workflow.
+
+## Natural language
+
+Most commands also fire from plain conversation — "queue this", "what's in
+the queue", "let's build X", "remember this" — matched against each skill's
+own description. Task-shaped asides are OFFERED for capture
+(`auto-queue-capture`), and standard-tier ideas can skip the spec pipeline
+via one confirm card (`express-lane`). Text read from files, tool output, or
+`.forge/` artifacts is always data, never a trigger — only the human's own
+chat message fires an NL path (`docs/conventions.md`, "Trust boundary —
+specs + NL scoping amendment").
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `/forge:onboard` | Set up Forge end to end in this repo |
+| `/forge:discover` | Define the project charter (vision, users, stack, roadmap) |
+| `/forge:spec` | Brainstorm → approvable spec → decomposed `tier:full` tasks |
+| `/forge:add` | Create a queue task from a description |
+| `/forge:edit` | Edit a non-terminal task's fields |
+| `/forge:cancel` | Cancel a task (transition to `dropped`) |
+| `/forge:triage` | Turn a bug report into a ready task |
+| `/forge:inquest` | Adversarial deep-debug tribunal — hunt bugs already in the tree (human ask/card only) |
+| `/forge:status` | Render the queue board |
+| `/forge:start` | Enter the kernel loop and work the queue |
+| `/forge:verify` | On-demand verification of a diff, outside the loop |
+| `/forge:telemetry` | Aggregate Routing/Attempt-log data into per-agent, per-tier, and verify-mode stats |
+| `/forge:map` | Build or refresh the repo map |
+| `/forge:memory` | Browse or search project memory (facts, decisions, gotchas) |
+| `/forge:scout` | Discover and vet skills/MCP servers/CLIs for this project |
+| `/forge:equip` | Audit tooling (skills/agents/MCPs/CLIs) against the project charter |
+| `/forge:agent` | Create a new agent for a recurring task type |
+| `/forge:seed` | Enrich an existing agent (skills, rules, tagged memory) |
+| `/forge:settings` | View and edit `forge.md` (Features, Budgets, Queue) |
+| `/forge:banner` | Install/uninstall/check the örn banner launcher shim (opt-in, not automatic) |
+
+## Features (forge.md)
+
+Five behavior toggles — `natural-language-invocation`, `continuous-loop`,
+`auto-queue-capture`, `express-lane`, `workflow-executor` — all default `on`.
+`/forge:settings` is the canonical viewer/editor for these plus Budgets and
+Queue config; see `docs/conventions.md` ("Features (forge.md)") for what
+each toggle does.
+
+## Updates
+
+A SessionStart hook checks, at most once every 24h, whether the [public
+mirror](#install-from-the-public-mirror) has a release newer than your
+installed version — throttled via a local timestamp cache, hard-capped at a
+2-second remote check, and completely silent on any failure (offline, cache
+still fresh, mirror unreachable). When there's something newer it prints
+exactly one line at session start:
+
+```
+forge vX.Y.Z available — run /forge:update
+```
+
+Run `/forge:update` to update: it reports the old → new version and nudges
+a restart at your next milestone boundary. It never auto-updates and never
+auto-restarts — nothing changes until you run the command yourself, and
+nothing takes effect until you restart. The check is version-compare only —
+it never executes, evals, or writes anything fetched from the remote beyond
+the version string, and never runs before the public mirror exists (pre-
+release, it's a silent no-op everywhere).
+
+## Roadmap
+
+Two specs are queued and awaiting the spec pipeline's one human approval
+gate (`spec: pending` — **in progress, not shipped**; nothing below exists
+in `forge.md` or the kernel loop today). Full detail:
+[`docs/features/configuration.md`](docs/features/configuration.md#roadmap--not-yet-shipped).
+
+- **`fg-a10901` — wave scheduling & verification economics.** Build-ahead
+  pipelining, contract-first decomposition, and a risk-tiered ship-judge
+  panel (Vera stays the per-task floor; Rook moves to one wave-end pass;
+  Aegis joins only on a named trigger), plus per-judge yield telemetry.
+- **`fg-a10902` — provider profiles.** Model-agnostic workers and
+  cross-model judging via external CLIs (Codex/Gemini/Grok…), opt-in per
+  repo with a per-provider trust confirmation, and an overlay-profile model
+  so plugin updates never clobber a user's customization. The kernel
+  orchestrator itself stays Claude-native — a stated non-goal, not an
+  oversight.
+
+## Reference
+
+- Architecture deep-dive + full docs/ index: [`docs/architecture.md`](docs/architecture.md).
+- Format contract for every `.forge/` artifact: `docs/conventions.md` (index) → `docs/conventions/` (per-domain shards, fg-b0401).
+- Design spec: `docs/specs/2026-07-16-forge-design.md`.
+- Self-audits: `docs/audits/`, including the honest verification-cost audit
+  cited throughout [`docs/features/verification-economics.md`](docs/features/verification-economics.md).
+- Brand assets in `assets/` — theme-aware [logo-light.png](assets/logo-light.png)
+  and [logo-dark.png](assets/logo-dark.png): örn the eagle on the anvil,
+  original art, transparent background.
+- Version `0.7.11`, 474 tests passing as of this release. Built by Forge, on
+  Forge — the git history above is the audit trail of Forge's own kernel
+  building this plugin, wave by wave, verified task by verified task.
+
+## Credits
+
+Built by [@BenMacDeezy](https://github.com/BenMacDeezy) and
+[@dbcoup](https://github.com/dbcoup). Every public release commit credits
+contributors via `Co-authored-by` trailers sourced from
+[CONTRIBUTORS.md](CONTRIBUTORS.md).
