@@ -1,0 +1,69 @@
+{
+  "task_id": "F2",
+  "class": "feature-with-criteria",
+  "brief_path": "tools/benchmark/tasks/F2/task.md",
+  "derived_from": [
+    "acceptance criteria in tools/benchmark/tasks/F2/task.md"
+  ],
+  "frozen_at": "2026-07-18",
+  "content_sha256": "a0dd8beaf56d4d7cd27b73fd3168053b6b9c1aa5f8d194131217618157726b8e",
+  "content_sha256_note": "sha256 over canonical JSON of {task_id, class, items} only (sorted keys, no whitespace) -- the hash that must not change once this checklist is frozen; recompute and compare before trusting any copy of this file.",
+  "items": [
+    {
+      "item_id": "F2-C1",
+      "description": "An `import` command exists on the CLI group, taking one required transactions-CSV path argument, using the same column schema load_transactions_csv already expects.",
+      "how_to_detect": "Inspect src/ledgerkit/cli.py for a new click command named import registered on the cli group; invoke it via CliRunner with a sample CSV and confirm it runs.",
+      "severity": "critical",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F2-C2",
+      "description": "Every row is validated (date parses as YYYY-MM-DD, amount_cents parses as an integer, both accounts exist in the demo chart) before anything is posted; a single invalid row causes the whole file's transactions to be rejected (all-or-nothing), not a partial post.",
+      "how_to_detect": "Run import against a CSV whose last row has a bad date/amount/unknown account, with earlier rows otherwise valid; confirm none of the earlier valid rows were posted (e.g. via the command's own summary output or a follow-up balance check) and the command reports the specific bad row.",
+      "severity": "critical",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F2-C3",
+      "description": "An invalid row produces a clear message identifying the offending row (row number and/or id) and what was wrong, and the command exits non-zero -- never an unhandled traceback.",
+      "how_to_detect": "Run import against a CSV with one malformed row; confirm exit code is non-zero and the message names the row/id and the problem rather than dumping a raw Python traceback.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F2-C4",
+      "description": "Exact duplicate rows (identical id, date, description, debit_account, credit_account, amount_cents) within one input file are only posted once; later occurrences are skipped, not posted again and not treated as an error.",
+      "how_to_detect": "Run import against a CSV containing the same row twice (byte-identical across all six columns); confirm only one transaction was posted for it (e.g. via the summary's posted count, or by checking the resulting balances reflect a single posting) and the command does not fail because of the duplicate.",
+      "severity": "critical",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F2-C5",
+      "description": "On success, the command prints a one-line summary reporting the number of transactions posted and the number of duplicate rows skipped, and exits 0.",
+      "how_to_detect": "Run import against a CSV with some distinct rows and some duplicates; confirm the printed summary's counts match (posted = distinct rows, skipped = duplicate occurrences) and exit code is 0.",
+      "severity": "minor",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F2-C6",
+      "description": "load_transactions_csv's existing signature and behavior are unchanged; new validation/dedupe logic lives in the CLI layer (or a clearly separate helper), not by mutating csv_import.py's parsing contract.",
+      "how_to_detect": "Diff csv_import.py's load_transactions_csv against the base -- signature and behavior should be unchanged (or additively compatible); confirm the new logic is additive, not a rewrite of the shared parser other commands depend on.",
+      "severity": "minor",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F2-C7",
+      "description": "No persistence layer or cross-invocation state was added -- dedupe only applies within a single input file/run, matching the brief's explicit scope limit.",
+      "how_to_detect": "Check for any new on-disk state file, database, or similar the import command reads/writes between invocations; there should be none -- the command must be a single load-validate-post-print-exit pass, like balance today.",
+      "severity": "minor",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F2-C8",
+      "description": "New tests cover: a normal import of several distinct rows, a file with exact duplicate rows (only first posted), an invalid row (nothing posted, non-zero exit), and an unknown-account row (nothing posted, non-zero exit) -- and the full test suite and lint gate pass.",
+      "how_to_detect": "Read the new tests for coverage of all four cases; run `pytest tests/` and `ruff check .` from the fixture root and confirm both succeed.",
+      "severity": "critical",
+      "source": "criteria"
+    }
+  ]
+}

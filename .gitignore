@@ -1,0 +1,7 @@
+.superpowers/
+.forge/.provenance
+.forge/.trust-local
+
+# Python build artifacts
+*.egg-info/
+__pycache__/

@@ -1,0 +1,80 @@
+{
+  "$schema_note": "Ground-truth key for the A/B benchmark's first committed run (fg-a10402, benchmark T2; design docs/plans/2026-07-18-ab-benchmark-design.md D2/D3/D5). Maps each of the 8 min-viable task_ids (human's 2026-07-18 binding answer: 8 pairs, 2 per class) to its brief path, its frozen checklist path + content hash, and the planted-defect id(s) (from tools/benchmark/ground-truth/ledgerkit-defects.sealed.json) it targets, if any. Consumed by whoever builds/drives the T7 blinded-audit harness and by T8's run inventory -- like tools/benchmark/ground-truth/ledgerkit-defects.sealed.json and bench/keys/*.sealed.json (per blinding.py SEALED_KEY_DIR), this file identifies which defect a task targets and must NOT be handed to the blinded auditor spawn (D5: the auditor receives only the frozen checklist, the normalized labeled diffs, and the fixture base -- never this key, never the raw ledgerkit-defects.sealed.json). It is fine for the checklists themselves to reference defect ids (D5 explicitly allows a checklist to be 'a pure correctness spec... expected behaviors, edge cases, planted defects'); what must stay sealed from the auditor is which arm's diff is which and this file's task->defect index used to build/validate that scoring, not the mere existence of defect ids inside a checklist.",
+  "run_scope": "first committed run: 8 tasks, 2 per class (human's 2026-07-18 binding answer to design open question 1)",
+  "frozen_at": "2026-07-18",
+  "fixture": "ledgerkit",
+  "fixture_path": "tools/benchmark/fixture",
+  "planted_defect_key_path": "tools/benchmark/ground-truth/ledgerkit-defects.sealed.json",
+  "class_taxonomy": {
+    "mechanical-sweep": "design docs/plans/2026-07-18-ab-benchmark-design.md §3 'Mechanical sweep (behavior-preserving; migrator-class)'",
+    "feature-with-criteria": "design §3 'Feature-with-criteria (EARS-checkable)'",
+    "bug-fix": "design §3 'Bug fix (planted defect, known root cause; regression test required)'",
+    "doc-change": "design §3 documentation-change task class (doc-class)"
+  },
+  "not_built_this_run": {
+    "note": "Design §3 names 12 tasks (3/class); the human's binding answer scoped the first run to 8 (2/class). These 4 are not built in this run -- listed here only so a future extension to 3/class (design §D2) knows what's left, not as part of the 8-pair inventory below.",
+    "M3": "click major-version bump -- skipped: no real click 9 exists to install against, so the task as designed cannot pass a real dependency-install gate in this environment.",
+    "F3": "--currency flag with a fixed conversion table -- skipped for the 8-task minimum; no currency table exists anywhere in ledgerkit today, larger invented-scope risk than M1/M2/F1/F2.",
+    "B2": "date-range --since/--until boundary bug (ledgerkit-defects.sealed.json D-002) -- skipped for the 8-task minimum; B1 and B3 were chosen as the two most behaviorally distinct bug classes (silent-drift-turned-crash vs. hard crash).",
+    "DOC3": "CHANGELOG entry + 'Rounding semantics' doc section describing post-B1 behavior -- skipped: this task assumes B1's fix has already landed in the same tree, which doesn't hold for an independent single-task arm-run starting from the shared pinned base; would need re-scoping before it can be a standalone pair."
+  },
+  "tasks": {
+    "M1": {
+      "class": "mechanical-sweep",
+      "brief_path": "tools/benchmark/tasks/M1/task.md",
+      "checklist_path": "tools/benchmark/ground-truth/checklists/M1.checklist.json",
+      "checklist_content_sha256": "1c614100acb5b628a10b3ff3c493ebf56bb1654f6a7c3640b27b083196d9371d",
+      "planted_defect_ids": []
+    },
+    "M2": {
+      "class": "mechanical-sweep",
+      "brief_path": "tools/benchmark/tasks/M2/task.md",
+      "checklist_path": "tools/benchmark/ground-truth/checklists/M2.checklist.json",
+      "checklist_content_sha256": "4f1e23016818eeed080cbf6b1ea9d489651caa40947661c27d9dce7f5b12cbb9",
+      "planted_defect_ids": []
+    },
+    "F1": {
+      "class": "feature-with-criteria",
+      "brief_path": "tools/benchmark/tasks/F1/task.md",
+      "checklist_path": "tools/benchmark/ground-truth/checklists/F1.checklist.json",
+      "checklist_content_sha256": "a993e3341182a07bb8d54a2fba102b19b17e11a2fa2ee59783ee96bca98124fb",
+      "planted_defect_ids": []
+    },
+    "F2": {
+      "class": "feature-with-criteria",
+      "brief_path": "tools/benchmark/tasks/F2/task.md",
+      "checklist_path": "tools/benchmark/ground-truth/checklists/F2.checklist.json",
+      "checklist_content_sha256": "a0dd8beaf56d4d7cd27b73fd3168053b6b9c1aa5f8d194131217618157726b8e",
+      "planted_defect_ids": []
+    },
+    "B1": {
+      "class": "bug-fix",
+      "brief_path": "tools/benchmark/tasks/B1/task.md",
+      "checklist_path": "tools/benchmark/ground-truth/checklists/B1.checklist.json",
+      "checklist_content_sha256": "bcffa4d163d3f330abcd6b97cd1bc3e25b94235f0fe6f78e143e520ada3322bd",
+      "planted_defect_ids": ["D-001"]
+    },
+    "B3": {
+      "class": "bug-fix",
+      "brief_path": "tools/benchmark/tasks/B3/task.md",
+      "checklist_path": "tools/benchmark/ground-truth/checklists/B3.checklist.json",
+      "checklist_content_sha256": "4bcc3eca8392ae03d1ac5406fac832d2efc42e1bcfa686c9e769c92f3309cb17",
+      "planted_defect_ids": ["D-003"]
+    },
+    "DOC1": {
+      "class": "doc-change",
+      "brief_path": "tools/benchmark/tasks/DOC1/task.md",
+      "checklist_path": "tools/benchmark/ground-truth/checklists/DOC1.checklist.json",
+      "checklist_content_sha256": "e5fc98528887199eb45d091c51650c7f42c1be17af697f07056e58aa3867d7f2",
+      "planted_defect_ids": ["D-005"]
+    },
+    "DOC2": {
+      "class": "doc-change",
+      "brief_path": "tools/benchmark/tasks/DOC2/task.md",
+      "checklist_path": "tools/benchmark/ground-truth/checklists/DOC2.checklist.json",
+      "checklist_content_sha256": "66be186ea318cab392dc8bf6c69a47a2d47dae78ad5d4e10e2c9d12a45d72721",
+      "planted_defect_ids": [],
+      "related_defect_ids": ["D-004"]
+    }
+  }
+}

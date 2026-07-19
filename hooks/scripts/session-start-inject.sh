@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Forge session-start injector: map freshness status + memory index pointer.
+# FAIL SILENT, NON-LOAD-BEARING: any problem -> exit 0 with no output. The
+# kernel SYNC step performs this same check itself when the hook is absent.
+set +e
+cd "${CLAUDE_PROJECT_DIR:-.}" 2>/dev/null || exit 0
+[ -d .forge ] || exit 0
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+
+msg=""
+
+arch=".forge/map/architecture.md"
+if [ -f "$arch" ]; then
+  # Full-40-char SHA only, matching the header format docs/conventions.md
+  # mandates (2026-07-18 drift audit: {7,40} silently accepted abbreviated
+  # SHAs the doc's own format definition calls malformed).
+  sha=$(grep -o 'forge-map-commit: [0-9a-f]\{40\}' "$arch" 2>/dev/null \
+        | head -1 | awk '{print $2}')
+  head=$(git rev-parse HEAD 2>/dev/null)
+  if [ -n "$sha" ] && [ -n "$head" ]; then
+    if [ "$sha" = "$head" ] || git merge-base --is-ancestor "$sha" HEAD 2>/dev/null; then
+      behind=$(git rev-list --count "$sha..HEAD" 2>/dev/null)
+      if [ -z "$behind" ] || [ "$behind" = "0" ]; then
+        msg="Forge: repo map is fresh (.forge/map/architecture.md)."
+      else
+        msg="Forge: repo map is $behind commit(s) behind HEAD - run /forge:map to refresh."
+      fi
+    else
+      msg="Forge: repo map commit is not an ancestor of HEAD (diverged/rewritten history) - run /forge:map to refresh."
+    fi
+  elif [ -z "$sha" ]; then
+    msg="Forge: repo map header missing or malformed (.forge/map/architecture.md) - run /forge:map to refresh."
+  fi
+else
+  msg="Forge: no repo map yet - run /forge:map to build one."
+fi
+
+idx=".forge/memory/MEMORY.md"
+if [ -f "$idx" ]; then
+  n=$(grep -c '^- ' "$idx" 2>/dev/null)
+  msg="$msg Memory index: $idx ($n fact(s))."
+fi
+
+[ -z "$msg" ] && exit 0
+# Single-line ASCII, no quotes/backslashes -> JSON-safe.
+msg=$(printf '%s' "$msg" | tr -d '"\\')
+printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$msg"
+exit 0
