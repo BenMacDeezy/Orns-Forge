@@ -1,0 +1,7 @@
+flowchart TD
+    OVERRIDE{"human routing override?"} -->|yes| ROUTE["use override"]
+    OVERRIDE -->|no| CARVE{"sensitive-domain carve-out?"}
+    CARVE -->|yes| CLAUDE["Claude builder"]
+    CARVE -->|no| GATES{"provider gates pass?"}
+    GATES -->|no| CLAUDE
+    GATES -->|yes| ROLE["active profile role"] --> SHAPE["work shape tie-break"] --> ROUTE

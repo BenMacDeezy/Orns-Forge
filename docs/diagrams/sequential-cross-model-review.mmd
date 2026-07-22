@@ -1,0 +1,12 @@
+flowchart TD
+    SENSITIVE{"sensitive domain?"}
+    SENSITIVE -->|yes| CLAUDE["Claude builds"]
+    SENSITIVE -->|no| BUILDER["routed builder"]
+    CLAUDE --> CODEX["codex takes verifier slot"]
+    BUILDER --> CODEX
+    CODEX --> FINDINGS{"findings flagged?"}
+    FINDINGS -->|no| INTEGRATE["normal integration gate"]
+    FINDINGS -->|yes| CLAUDE_REVIEW["Claude reviews findings"]
+    CLAUDE_REVIEW --> DISPUTED{"disputed?"}
+    DISPUTED -->|no| INTEGRATE
+    DISPUTED -->|yes| HUMAN["human resolution"] --> INTEGRATE
