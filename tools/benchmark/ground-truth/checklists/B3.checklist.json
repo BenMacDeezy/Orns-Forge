@@ -1,0 +1,64 @@
+{
+  "task_id": "B3",
+  "class": "bug-fix",
+  "brief_path": "tools/benchmark/tasks/B3/task.md",
+  "planted_defect_id": "D-003",
+  "derived_from": [
+    "acceptance criteria in tools/benchmark/tasks/B3/task.md",
+    "tools/benchmark/ground-truth/ledgerkit-defects.sealed.json, defect D-003 (running_totals_by_category assumes a fixed category set)"
+  ],
+  "frozen_at": "2026-07-18",
+  "content_sha256": "4bcc3eca8392ae03d1ac5406fac832d2efc42e1bcfa686c9e769c92f3309cb17",
+  "content_sha256_note": "sha256 over canonical JSON of {task_id, class, items} only (sorted keys, no whitespace) -- the hash that must not change once this checklist is frozen; recompute and compare before trusting any copy of this file.",
+  "items": [
+    {
+      "item_id": "B3-C1",
+      "description": "Posting an entry to an account whose category is not \"food\", \"rent\", or \"utilities\" and then calling running_totals_by_category no longer raises KeyError.",
+      "how_to_detect": "Run the bug report's repro (post to an account with category \"travel\", then call running_totals_by_category) and confirm it returns normally instead of raising.",
+      "severity": "critical",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "B3-C2",
+      "description": "The new category's running totals are correct: the returned series for that category reflects the correct cumulative balance after each touching entry, in posting order -- same semantics as the three previously-hardcoded categories.",
+      "how_to_detect": "Post two or more entries touching the new category across separate transactions and confirm the returned series is the correct running cumulative sequence, not just present-and-non-crashing.",
+      "severity": "critical",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "B3-C3",
+      "description": "Categories present in the chart but never touched by any transaction still appear in the returned dict with an empty list -- the existing test_untouched_categories_stay_empty contract is preserved, not silently dropped by switching to an only-report-what-was-touched scheme.",
+      "how_to_detect": "Re-run (or re-derive) test_untouched_categories_stay_empty: build a chart with an untouched categorized account, post only to a different category, and confirm the untouched category's key is present with value [].",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "B3-C4",
+      "description": "The fix derives known categories from the chart passed to the function at call time (or an equivalent non-hardcoded mechanism), not from a widened-but-still-fixed hardcoded tuple that could recur as the same class of bug later.",
+      "how_to_detect": "Read running_totals_by_category's new implementation: confirm it no longer keys off a fixed literal tuple of category names, but instead derives the category set from ledger.chart (or uses a defaultdict/setdefault approach that handles any category transparently).",
+      "severity": "important",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "B3-C5",
+      "description": "Behavior for the three previously-hardcoded categories (food, rent, utilities) is unchanged.",
+      "how_to_detect": "Re-run the pre-existing TestRunningTotalsByCategory tests (test_accumulates_in_posting_order, test_untouched_categories_stay_empty) and confirm they pass unmodified in behavior.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "B3-C6",
+      "description": "A regression test in tests/test_report.py posts to an account with a category outside the original hardcoded three and asserts running_totals_by_category returns the correct totals for it (not merely that it doesn't crash).",
+      "how_to_detect": "Read tests/test_report.py for a new test posting to a category like \"travel\" and asserting on the returned series' actual values.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "B3-C7",
+      "description": "The full test suite and lint gate pass after the fix.",
+      "how_to_detect": "Run `pytest tests/` and `ruff check .` from the fixture root; both must succeed with no new failures relative to the pinned baseline.",
+      "severity": "critical",
+      "source": "criteria"
+    }
+  ]
+}

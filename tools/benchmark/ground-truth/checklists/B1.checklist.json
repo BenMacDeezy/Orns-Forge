@@ -1,0 +1,64 @@
+{
+  "task_id": "B1",
+  "class": "bug-fix",
+  "brief_path": "tools/benchmark/tasks/B1/task.md",
+  "planted_defect_id": "D-001",
+  "derived_from": [
+    "acceptance criteria in tools/benchmark/tasks/B1/task.md",
+    "tools/benchmark/ground-truth/ledgerkit-defects.sealed.json, defect D-001 (split_evenly drops the remainder)"
+  ],
+  "frozen_at": "2026-07-18",
+  "content_sha256": "bcffa4d163d3f330abcd6b97cd1bc3e25b94235f0fe6f78e143e520ada3322bd",
+  "content_sha256_note": "sha256 over canonical JSON of {task_id, class, items} only (sorted keys, no whitespace) -- the hash that must not change once this checklist is frozen; recompute and compare before trusting any copy of this file.",
+  "items": [
+    {
+      "item_id": "B1-C1",
+      "description": "sum(split_evenly(total_cents, num_parts)) == total_cents for every positive num_parts, including when total_cents % num_parts != 0 -- the remainder is no longer silently dropped.",
+      "how_to_detect": "Call split_evenly(100, 3) and confirm the returned list sums to 100 (not 99); sweep a few more non-evenly-divisible pairs (e.g. (10, 4), (7, 5)) and confirm the sum always equals total_cents.",
+      "severity": "critical",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "B1-C2",
+      "description": "The remainder is distributed as whole cents (largest-remainder / round-robin: the first `total_cents % num_parts` entries get one extra cent each), not fractional cents and not all dumped onto one entry in a way that contradicts the brief's stated allocation.",
+      "how_to_detect": "Check split_evenly(100, 3) returns exactly [34, 33, 33] (or an equivalent round-robin allocation consistent with the brief) rather than e.g. [35, 32, 33] or a float-based split.",
+      "severity": "important",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "B1-C3",
+      "description": "Evenly-divisible splits are unchanged from the pre-fix behavior (e.g. split_evenly(300, 3) == [100, 100, 100], split_evenly(200, 2) == [100, 100]).",
+      "how_to_detect": "Run the pre-existing TestSplitEvenly tests for evenly-divisible amounts and confirm they still pass unmodified in behavior (same return values).",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "B1-C4",
+      "description": "Ledger.split_expense no longer raises ValueError('does not balance') when splitting an amount that doesn't divide evenly across participants (the caller-visible symptom named in the ground truth and the bug report).",
+      "how_to_detect": "Call ledger.split_expense with total_cents=100 across 3 participants (per the bug report's repro) and confirm it posts successfully without raising, and that the participant account balances plus the payer's balance sum to zero.",
+      "severity": "critical",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "B1-C5",
+      "description": "A regression test in tests/test_money.py proves sum(split_evenly(...)) == total_cents for a non-evenly-divisible case and asserts the exact expected share list (not just the sum).",
+      "how_to_detect": "Read tests/test_money.py for a new test case with total_cents % num_parts != 0 asserting an exact list equality, not merely a sum() assertion.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "B1-C6",
+      "description": "A regression test in tests/test_ledger.py proves split_expense no longer raises for a non-evenly-divisible split and that resulting balances still sum to the total.",
+      "how_to_detect": "Read tests/test_ledger.py for a new TestSplitExpense case using a total_cents not evenly divisible by the participant count, asserting no exception and correct balance conservation.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "B1-C7",
+      "description": "The full test suite and lint gate pass after the fix.",
+      "how_to_detect": "Run `pytest tests/` and `ruff check .` from the fixture root; both must succeed with no new failures relative to the pinned baseline.",
+      "severity": "critical",
+      "source": "criteria"
+    }
+  ]
+}

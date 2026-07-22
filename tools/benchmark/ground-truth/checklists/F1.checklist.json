@@ -1,0 +1,62 @@
+{
+  "task_id": "F1",
+  "class": "feature-with-criteria",
+  "brief_path": "tools/benchmark/tasks/F1/task.md",
+  "derived_from": [
+    "acceptance criteria in tools/benchmark/tasks/F1/task.md"
+  ],
+  "frozen_at": "2026-07-18",
+  "content_sha256": "a993e3341182a07bb8d54a2fba102b19b17e11a2fa2ee59783ee96bca98124fb",
+  "content_sha256_note": "sha256 over canonical JSON of {task_id, class, items} only (sorted keys, no whitespace) -- the hash that must not change once this checklist is frozen; recompute and compare before trusting any copy of this file.",
+  "items": [
+    {
+      "item_id": "F1-C1",
+      "description": "A `report` command exists on the CLI group, taking one required transactions-CSV path argument, and supports a `--by-category` flag.",
+      "how_to_detect": "Inspect src/ledgerkit/cli.py for a new click command named report registered on the cli group with a --by-category option; invoke it via CliRunner with a sample CSV and confirm it runs.",
+      "severity": "critical",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F1-C2",
+      "description": "With --by-category, output is one line per category with a non-empty total, formatted `<category>: <amount>` using format_cents (never a raw float or unformatted int).",
+      "how_to_detect": "Run report --by-category against a CSV touching several categorized accounts; confirm each printed line matches the category/amount shape and the amount string matches format_cents' fixed two-decimal output for that total.",
+      "severity": "critical",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F1-C3",
+      "description": "Lines are sorted by descending total (largest first); a tie in total is broken by ascending category name.",
+      "how_to_detect": "Construct a CSV producing at least two categories with different totals and, separately, a case with two categories tied at the same total; confirm output order matches descending-total-then-ascending-name.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F1-C4",
+      "description": "When there are no categorized entries (empty CSV, or a CSV that only touches uncategorized accounts), the command prints a clear no-data message and exits 0 (not an error).",
+      "how_to_detect": "Run report --by-category against a CSV with no categorized-account entries; confirm exit code is 0 and the output communicates there is nothing to report rather than printing an empty table silently or raising.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F1-C5",
+      "description": "A missing/unreadable CSV file, or a CSV row referencing an unknown account id, makes the command exit non-zero rather than crash with an unhandled traceback.",
+      "how_to_detect": "Run report --by-category against a nonexistent path and against a CSV referencing an account id absent from the demo chart; confirm both exit non-zero and neither produces a raw unhandled-exception traceback in the CLI output.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F1-C6",
+      "description": "The existing `balance` command's behavior and output are unchanged.",
+      "how_to_detect": "Diff cli.py's balance_cmd and re-run the existing balance-command tests; confirm no change to its output shape or exit codes.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "F1-C7",
+      "description": "New tests cover: normal multi-category descending output, a tie broken alphabetically, the empty/no-categorized-entries case, and at least one failure case (missing file or unknown account) -- and the full test suite and lint gate pass.",
+      "how_to_detect": "Read tests/test_cli.py (or wherever the new tests land) for coverage of all four cases; run `pytest tests/` and `ruff check .` from the fixture root and confirm both succeed.",
+      "severity": "critical",
+      "source": "criteria"
+    }
+  ]
+}
