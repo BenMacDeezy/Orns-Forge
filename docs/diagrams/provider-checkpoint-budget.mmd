@@ -1,0 +1,11 @@
+flowchart TD
+    TALLY["tally provider dispatch"] --> NUMERIC{"numeric cap set?"}
+    NUMERIC -->|yes| CAP{"cap reached?"}
+    CAP -->|yes| STOP["hard stop / Claude fallback"]
+    CAP -->|no| CONTINUE["dispatch"]
+    NUMERIC -->|no| TENTH{"multiple of checkpoint cadence?"}
+    TENTH -->|no| CONTINUE
+    TENTH -->|yes| CHECKPOINT["one-line checkpoint:<br/>tally, providers, exact model slugs"]
+    CHECKPOINT --> OBJECT{"human objects?"}
+    OBJECT -->|no| CONTINUE
+    OBJECT -->|yes| STOP
