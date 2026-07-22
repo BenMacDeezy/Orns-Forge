@@ -1,0 +1,11 @@
+flowchart TD
+    FEATURE{"providers Feature on?"} -->|yes| TOGGLE{"provider toggle on?"}
+    FEATURE -->|no| FALLBACK["Claude route + stated gate note"]
+    TOGGLE -->|yes| TOFU{"TOFU confirmed?"}
+    TOGGLE -->|no| FALLBACK
+    TOFU -->|yes| BUDGET{"budget / checkpoint allows?"}
+    TOFU -->|no| FALLBACK
+    BUDGET -->|yes| PILOT{"pilot gate clear?<br/>(grok / antigravity only)"}
+    BUDGET -->|no| FALLBACK
+    PILOT -->|yes, or not pilot-gated| DISPATCH["provider dispatch"]
+    PILOT -->|no| FALLBACK

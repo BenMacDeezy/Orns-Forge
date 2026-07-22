@@ -1,0 +1,10 @@
+.superpowers/
+.forge/.provenance
+.forge/.trust-local
+.coverage
+
+# Python build artifacts
+*.egg-info/
+__pycache__/
+.forge/.trust-providers/
+.forge/.active-dispatches/
