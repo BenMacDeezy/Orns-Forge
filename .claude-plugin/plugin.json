@@ -1,0 +1,16 @@
+{
+  "name": "forge",
+  "displayName": "Forge",
+  "version": "0.20.0",
+  "description": "Autonomous development system: file-based work queue, kernel orchestration loop, routed agent roster. Markdown is the system; scripts are accelerators.",
+  "author": {
+    "name": "BenMacDeezy"
+  },
+  "license": "MIT",
+  "keywords": [
+    "orchestration",
+    "queue",
+    "agents",
+    "workflow"
+  ]
+}

@@ -1,0 +1,6 @@
+host: db.internal
+port: 5432
+username: admin
+password: ${DB_PASSWORD}
+ssl: true
+pool_size: 10
