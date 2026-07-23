@@ -1,0 +1,12 @@
+{
+  "name": "orns-forge",
+  "owner": { "name": "BenMacDeezy" },
+  "description": "Orns Forge — autonomous development plugin for Claude Code.",
+  "plugins": [
+    {
+      "name": "forge",
+      "source": "./",
+      "description": "Autonomous development system: queue, kernel loop, routed agents."
+    }
+  ]
+}
