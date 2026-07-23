@@ -1,0 +1,9 @@
+flowchart TD
+    HANDS["1. Hands-on<br/>commands + step approvals"] --> PROMPT["2. Prompt-driven<br/>NL routes one run"]
+    PROMPT --> SESSION["3. Session-autonomous<br/>one approval, spec wave"]
+    SESSION --> STANDING["4. Standing autonomy<br/>schedule + continuous loop"]
+    RAIL["IMMOVABLE GATES<br/>full-spec approval · provider TOFU/toggles<br/>budgets/checkpoints · sensitive-builder carve-out<br/>pilot gates · marginal-gain stop rules"]
+    RAIL --- HANDS
+    RAIL --- PROMPT
+    RAIL --- SESSION
+    RAIL --- STANDING
