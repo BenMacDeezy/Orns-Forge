@@ -1,0 +1,30 @@
+# Line-ending normalization (fg-a10912). Without this, Git warns
+# CRLF/LF-will-be-replaced on every commit on Windows hosts.
+#
+# Baseline: let Git auto-detect text vs binary and normalize line endings
+# to LF in the repo, converting to the platform's native ending on checkout.
+* text=auto
+
+# Source and docs: always LF, even on checkout — these are read/executed
+# by tools (Python, shells, YAML/JSON parsers) that shouldn't see CRLF.
+*.py  text eol=lf
+*.md  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.sh  text eol=lf
+
+# Windows-native scripts: always CRLF — these are run by cmd.exe/PowerShell,
+# which are happiest with native Windows line endings.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets: never diffed or line-ending-normalized.
+*.ans -text
+*.png -text
+*.jpg -text
+*.jpeg -text
+*.gif -text
+*.ico -text
+*.webp -text
