@@ -1,0 +1,17 @@
+# Path prefixes excluded from public-mirror releases (tools/release.py).
+#
+# One path per line, relative to repo root, no leading slash. A prefix
+# denies the path itself and everything under it (e.g. ".forge" denies
+# ".forge/queue/tasks/foo.md"). Lines starting with # are comments; blank
+# lines are ignored.
+#
+# Pinned by tools/test_release.py -- these two entries are load-bearing:
+# .forge/ carries all project state (queue, specs, project memory) and
+# docs/audits/ is internal audit output. Neither ships to the public mirror.
+
+.forge
+docs/audits
+docs/drills
+docs/plans
+docs/diagnostics
+docs/specs
