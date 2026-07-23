@@ -1,0 +1,63 @@
+{
+  "task_id": "M1",
+  "class": "mechanical-sweep",
+  "brief_path": "tools/benchmark/tasks/M1/task.md",
+  "derived_from": [
+    "acceptance criteria in tools/benchmark/tasks/M1/task.md",
+    "static inspection of tools/benchmark/fixture/src/ledgerkit at the pinned base (no planted defect involved -- this is a pure rename sweep)"
+  ],
+  "frozen_at": "2026-07-18",
+  "content_sha256": "1c614100acb5b628a10b3ff3c493ebf56bb1654f6a7c3640b27b083196d9371d",
+  "content_sha256_note": "sha256 over canonical JSON of {task_id, class, items} only (sorted keys, no whitespace) -- the hash that must not change once this checklist is frozen; recompute and compare before trusting any copy of this file.",
+  "items": [
+    {
+      "item_id": "M1-C1",
+      "description": "Account.current_balance() exists on Account and returns the same value the old balance() method returned (the account's signed running-balance cents).",
+      "how_to_detect": "Read src/ledgerkit/accounts.py: confirm a current_balance() method exists on Account, that it reads the account's running-balance state, and that no other logic changed (compare against the pre-change balance() body).",
+      "severity": "critical",
+      "source": "criteria"
+    },
+    {
+      "item_id": "M1-C2",
+      "description": "balance() still exists on Account as a working alias: calling it returns the same value as current_balance() and does not raise.",
+      "how_to_detect": "Read src/ledgerkit/accounts.py and/or run account.balance() against a live Account instance; confirm it returns the same integer current_balance() would.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "M1-C3",
+      "description": "Calling the deprecated balance() alias emits a DeprecationWarning (not silently swallowed, not a different warning category).",
+      "how_to_detect": "Read the balance() alias implementation for a warnings.warn(..., DeprecationWarning) call (or equivalent stdlib deprecation mechanism), or run it under pytest.warns(DeprecationWarning) / python -W and confirm the warning fires.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "M1-C4",
+      "description": "No call site inside src/ledgerkit/ (report.py's account_balances, cli.py's balance_cmd, and any other .balance() call under src/ledgerkit/) still calls the deprecated .balance() alias -- every in-package call site was switched to .current_balance().",
+      "how_to_detect": "grep -rn \"\\.balance()\" tools/benchmark/fixture/src/ledgerkit -- every remaining hit must be on something other than an Account instance, or absent entirely. Cross-check report.py's account_balances and cli.py's balance_cmd specifically, since both called .balance() at the pinned base.",
+      "severity": "critical",
+      "source": "criteria"
+    },
+    {
+      "item_id": "M1-C5",
+      "description": "Existing tests that read balances were updated to call .current_balance() (not left calling the now-deprecated alias en masse), and at least one test explicitly exercises the deprecated .balance() alias and asserts it still returns the correct value.",
+      "how_to_detect": "Read tests/test_accounts.py, tests/test_ledger.py, tests/test_cli.py: confirm ordinary balance-read assertions use .current_balance(), and locate at least one test calling .balance() directly with an assertion on its return value (and ideally on the warning).",
+      "severity": "minor",
+      "source": "criteria"
+    },
+    {
+      "item_id": "M1-C6",
+      "description": "Observable behavior outside the renamed method is unchanged: transaction posting, report output, and CLI balance output are identical to the pre-change baseline (other than the new deprecation warning when the old name is used).",
+      "how_to_detect": "Compare CLI/report output in the diff against the base: no changed printed values, no changed report shapes, no unrelated logic edits inside accounts.py, report.py, or cli.py.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "M1-C7",
+      "description": "The full test suite and lint gate pass after the change.",
+      "how_to_detect": "Run `pytest tests/` and `ruff check .` from the fixture root; both must succeed with no new failures relative to the pinned baseline.",
+      "severity": "critical",
+      "source": "criteria"
+    }
+  ]
+}

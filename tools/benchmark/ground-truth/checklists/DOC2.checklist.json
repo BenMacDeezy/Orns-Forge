@@ -1,0 +1,65 @@
+{
+  "task_id": "DOC2",
+  "class": "doc-change",
+  "brief_path": "tools/benchmark/tasks/DOC2/task.md",
+  "related_defect_id": "D-004",
+  "derived_from": [
+    "acceptance criteria in tools/benchmark/tasks/DOC2/task.md",
+    "static inspection of tools/benchmark/fixture/src/ledgerkit/report.py at the pinned base -- total_balance, category_totals, and largest_category have no docstrings today",
+    "tools/benchmark/ground-truth/ledgerkit-defects.sealed.json, defect D-004 (category_totals silently skips entries on accounts with category is None) -- this task does not require fixing D-004, only documenting the current behavior accurately, so an accurate category_totals docstring must name this skip rather than describing it as covering every touched account"
+  ],
+  "frozen_at": "2026-07-18",
+  "content_sha256": "66be186ea318cab392dc8bf6c69a47a2d47dae78ad5d4e10e2c9d12a45d72721",
+  "content_sha256_note": "sha256 over canonical JSON of {task_id, class, items} only (sorted keys, no whitespace) -- the hash that must not change once this checklist is frozen; recompute and compare before trusting any copy of this file.",
+  "items": [
+    {
+      "item_id": "DOC2-C1",
+      "description": "total_balance, category_totals, and largest_category in src/ledgerkit/report.py each have a docstring (none did at the pinned base).",
+      "how_to_detect": "Read src/ledgerkit/report.py: confirm all three functions now have a non-empty docstring.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "DOC2-C2",
+      "description": "The correctness trap: category_totals' docstring explicitly states that entries on an account with no category (category is None) are excluded/skipped from the result -- it does not claim or imply that every touched account is reflected.",
+      "how_to_detect": "Read category_totals' implementation (the `if account.category is None: continue` line) and compare against its new docstring: the docstring must name this exclusion, not describe the function as covering every account touched by a transaction.",
+      "severity": "critical",
+      "source": "related-defect"
+    },
+    {
+      "item_id": "DOC2-C3",
+      "description": "largest_category's docstring states what it returns for a ledger with no categorized entries (None) and describes its tie-break behavior accurately -- i.e. that ties are resolved deterministically (by category name), not silently glossed over as arbitrary or unmentioned.",
+      "how_to_detect": "Read largest_category's implementation (max(..., key=lambda kv: (kv[1], kv[0]))) and confirm the docstring both states the empty-ledger return value and correctly characterizes the tie-break (alphabetically-last category name wins a tie) rather than omitting it or describing it as arbitrary/undefined.",
+      "severity": "important",
+      "source": "criteria"
+    },
+    {
+      "item_id": "DOC2-C4",
+      "description": "total_balance's docstring states its return for an empty ledger and correctly characterizes when it is expected to be zero (every posted transaction balances individually, so the ledger-wide sum is always zero) rather than leaving that unstated or implying it can be arbitrary.",
+      "how_to_detect": "Read total_balance's implementation and account_balances/Ledger.post's balancing invariant; confirm the docstring states the empty-ledger case and the always-zero-for-a-valid-ledger property (or explicitly and correctly describes why/when it wouldn't be).",
+      "severity": "minor",
+      "source": "criteria"
+    },
+    {
+      "item_id": "DOC2-C5",
+      "description": "No behavior was changed -- this is a documentation-only task; category_totals still silently skips uncategorized entries exactly as before (the docstring documents this, it does not fix it).",
+      "how_to_detect": "Diff report.py's function bodies against the base: only docstrings were added, no logic changed.",
+      "severity": "critical",
+      "source": "criteria"
+    },
+    {
+      "item_id": "DOC2-C6",
+      "description": "Docstring style matches the rest of report.py (short summary line, plain prose, consistent with account_balances' and running_totals_by_category's existing docstrings) -- no invented markup convention foreign to the file.",
+      "how_to_detect": "Compare the new docstrings' formatting/tone against the two pre-existing docstrings in the same file.",
+      "severity": "minor",
+      "source": "criteria"
+    },
+    {
+      "item_id": "DOC2-C7",
+      "description": "pytest tests/ and ruff check . still pass (doc-only change must not break anything).",
+      "how_to_detect": "Run `pytest tests/` and `ruff check .` from the fixture root; both must succeed with no new failures relative to the pinned baseline.",
+      "severity": "important",
+      "source": "criteria"
+    }
+  ]
+}
