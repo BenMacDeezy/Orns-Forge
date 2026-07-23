@@ -1,0 +1,64 @@
+{
+  "task_id": "DOC1",
+  "class": "doc-change",
+  "brief_path": "tools/benchmark/tasks/DOC1/task.md",
+  "planted_defect_id": "D-005",
+  "derived_from": [
+    "acceptance criteria in tools/benchmark/tasks/DOC1/task.md",
+    "tools/benchmark/ground-truth/ledgerkit-defects.sealed.json, defect D-005 (README drift: renamed-method, renamed-parameters, broken-cross-reference, stale-example-output facets)"
+  ],
+  "frozen_at": "2026-07-18",
+  "content_sha256": "e5fc98528887199eb45d091c51650c7f42c1be17af697f07056e58aa3867d7f2",
+  "content_sha256_note": "sha256 over canonical JSON of {task_id, class, items} only (sorted keys, no whitespace) -- the hash that must not change once this checklist is frozen; recompute and compare before trusting any copy of this file.",
+  "items": [
+    {
+      "item_id": "DOC1-C1",
+      "description": "The Quick start example no longer calls a nonexistent method (get_balance) on Account; it calls the real balance-reading method the pinned code actually has (balance()).",
+      "how_to_detect": "Read the Quick start code block in README.md: the account-balance call must name a method that actually exists on Account in src/ledgerkit/accounts.py at this pinned base (get_balance must not appear).",
+      "severity": "important",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "DOC1-C2",
+      "description": "The Quick start example's claimed printed output matches what the shown code actually produces (the example posts -120000/120000 cent entries; the comment must show the balance format_cents would actually produce for that, not a mismatched value).",
+      "how_to_detect": "Compute format_cents() for the balance the Quick start example's posted entries actually produce and confirm README.md's comment shows that exact value, not a different one left over from an earlier version of the example.",
+      "severity": "important",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "DOC1-C3",
+      "description": "The Date-range queries example calls Ledger.transactions_between with the real parameter names (since, until), not renamed ones (start, end) that would raise TypeError if run.",
+      "how_to_detect": "Read Ledger.transactions_between's signature in src/ledgerkit/ledger.py and compare it against the keyword arguments shown in README.md's Date-range queries example -- they must match exactly.",
+      "severity": "important",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "DOC1-C4",
+      "description": "README.md no longer references a design-rationale/architecture doc path that doesn't exist in the repository (either the dangling reference was removed, or it now points at a file that actually exists).",
+      "how_to_detect": "Extract every file path README.md references (e.g. via a link or \"See <path>\" phrasing) and confirm each one exists in the repository tree; none should 404.",
+      "severity": "minor",
+      "source": "planted-defect"
+    },
+    {
+      "item_id": "DOC1-C5",
+      "description": "No code under src/ledgerkit/ or tests/ was modified -- this is a documentation-only fix; any example that was wrong because of an actual code bug should have its description of the real current behavior corrected in the README, not the code changed.",
+      "how_to_detect": "Diff the change: only README.md (and possibly other prose docs) should be touched; src/ledgerkit/ and tests/ must be untouched.",
+      "severity": "critical",
+      "source": "criteria"
+    },
+    {
+      "item_id": "DOC1-C6",
+      "description": "The rest of the README (Splitting an expense, CSV import, Reports, Command line, Running the tests) is still accurate after the fix -- no new inaccuracy was introduced and no untouched inaccuracy elsewhere was missed if it was clearly in scope of \"matches current code\".",
+      "how_to_detect": "Spot-check the remaining README sections' names/signatures/commands against the current src/ledgerkit/ code for obvious mismatches.",
+      "severity": "minor",
+      "source": "criteria"
+    },
+    {
+      "item_id": "DOC1-C7",
+      "description": "pytest tests/ still passes (doc-only change must not break anything).",
+      "how_to_detect": "Run `pytest tests/` from the fixture root; must succeed with no new failures relative to the pinned baseline.",
+      "severity": "important",
+      "source": "criteria"
+    }
+  ]
+}

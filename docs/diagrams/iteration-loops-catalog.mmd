@@ -1,0 +1,8 @@
+flowchart TD
+    BOUNCE["bounce-retry<br/>max 2 retries → blocked"]
+    WATCH["watch loop<br/>attempt cap → escalate"]
+    DRY["loop-until-dry<br/>2 empty rounds → stop"]
+    CONSENSUS["plan consensus<br/>C1 + C2 max → human"]
+    SEQUENTIAL["sequential review<br/>2 lifetime passes → human"]
+    DUAL["dualverify<br/>explicit command only"]
+    AUDIT["audit fix waves<br/>human-invoked only"]
