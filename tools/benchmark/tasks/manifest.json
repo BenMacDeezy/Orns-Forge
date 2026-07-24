@@ -1,0 +1,24 @@
+{
+  "$schema_note": "Run inventory for the A/B benchmark's first committed run (fg-a10402, benchmark T2; design docs/plans/2026-07-18-ab-benchmark-design.md D2 -- human's 2026-07-18 binding answer: 8 pairs, 2 per class, min-viable first run). Each entry is one task.md brief, byte-identical for both arms by construction (D3 -- arm identity is a runner flag against this same file, never brief content). Consumed by T8 as the run inventory: for each entry, run_pair the task at brief_path against both arm adapters, using pinned_base from the fixture contract, then score against ground-truth/task-key.json's matching checklist.",
+  "frozen_at": "2026-07-18",
+  "fixture": "ledgerkit",
+  "fixture_path": "tools/benchmark/fixture",
+  "ground_truth_key_path": "tools/benchmark/ground-truth/task-key.json",
+  "run_scope": "8 tasks, 2 per class (min-viable first run per D2)",
+  "pairs": [
+    {"task_id": "M1", "class": "mechanical-sweep", "brief_path": "tools/benchmark/tasks/M1/task.md"},
+    {"task_id": "M2", "class": "mechanical-sweep", "brief_path": "tools/benchmark/tasks/M2/task.md"},
+    {"task_id": "F1", "class": "feature-with-criteria", "brief_path": "tools/benchmark/tasks/F1/task.md"},
+    {"task_id": "F2", "class": "feature-with-criteria", "brief_path": "tools/benchmark/tasks/F2/task.md"},
+    {"task_id": "B1", "class": "bug-fix", "brief_path": "tools/benchmark/tasks/B1/task.md"},
+    {"task_id": "B3", "class": "bug-fix", "brief_path": "tools/benchmark/tasks/B3/task.md"},
+    {"task_id": "DOC1", "class": "doc-change", "brief_path": "tools/benchmark/tasks/DOC1/task.md"},
+    {"task_id": "DOC2", "class": "doc-change", "brief_path": "tools/benchmark/tasks/DOC2/task.md"}
+  ],
+  "class_coverage": {
+    "mechanical-sweep": ["M1", "M2"],
+    "feature-with-criteria": ["F1", "F2"],
+    "bug-fix": ["B1", "B3"],
+    "doc-change": ["DOC1", "DOC2"]
+  }
+}
