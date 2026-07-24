@@ -1,0 +1,211 @@
+# Forge file conventions (v1 — Phase 1)
+
+Single source of truth for `.forge/` artifact formats. The queue skill, kernel skill, and validator implement this contract exactly.
+
+<!-- content-neutral exception to the tail-append rule: TOC + amended-by lines below are pure additions, no existing prose changed -->
+
+**Table of contents** — topic-grouped; amending sections are nested under the parent topic(s) they amend, so a reader landing on a parent section can't miss its amendments.
+
+- .forge/ layout (Phase 1 subset)
+- Task files
+  - Parallel dispatch (Waves amendment, 2026-07-17)
+  - Claims and crash recovery — amendment (2026-07-17)
+- forge.md (project config)
+  - Budget keys — amendment (2026-07-17)
+  - Budget keys — amendment (2026-07-19): provider dispatch cap (fg-c0113, spec-e8a3)
+  - UI+motion task splitting, empty-repo gates-pending, and finder dispatch — 2026-07-18
+- Repo map files (`.forge/map/`) — Phase 2
+- Project memory files (`.forge/memory/`) — Phase 2
+  - Memory — agents tag + craft memory (2026-07-17)
+  - Craft-memory bleed check — 2026-07
+- Spec files (Phase 3)
+- constitution.md (Phase 3)
+- project.md (project charter)
+- .forge/agents/ (project-local agents)
+  - Ephemeral agent tier — 2026-07-19 (fg-b0301, spec-b71f3a)
+    - Agent promotion and retention — 2026-07-19 (fg-b0305+fg-b0306, spec-b71f3a)
+- Trust boundary
+  - Trust boundary — specs + NL scoping amendment (2026-07-17)
+  - Per-provider trust confirmation — 2026-07-19 (fg-c0103, spec-e8a3)
+  - Provider dispatch security rules — 2026-07-19 (fg-c0112, spec-e8a3)
+- Offline merge convention
+  - Readable task ids — 2026-07-20
+  - Multi-operator coordination — 2026-07-20
+- Optional task fields — 2026-07-22 (phase2-external-workers)
+- schema-version
+- Asking the user questions (interactive skills)
+- Features (forge.md)
+  - Trust boundary — specs + NL scoping amendment (2026-07-17) (also amends Trust boundary, above)
+  - Providers Feature — per-repo opt-in and per-provider trust gate — 2026-07-19 (fg-c0103, spec-e8a3)
+- Loop patterns
+- Workflow executor
+- Run charter (2026-07-17)
+- Model vocabulary — fable amendment (2026-07-17)
+- Report tasks (finder pattern) — 2026-07-17
+  - UI+motion task splitting, empty-repo gates-pending, and finder dispatch — 2026-07-18 (also amends forge.md (project config), above)
+  - Universal Forge-agent dispatch — 2026-07-19 (fg-b0303, spec-b71f3a)
+    - Dispatch-provenance flag — 2026-07-19 (fg-b0310, spec-b71f3a)
+- Prefer the agent factory over ad hoc generic dispatch — 2026-07-19
+  - Universal Forge-agent dispatch — 2026-07-19 (fg-b0303, spec-b71f3a) (also amends Report tasks (finder pattern), above)
+- Freshness convention (date-sensitive skills) — 2026-07-18
+- Capability-gap audits (equip) — 2026-07
+- Latency rules — ship-review overlap, mechanical bounces, batch gates, sliding-window dispatch — 2026-07
+- Low-risk verification (standard sub-class) — 2026-07
+- Dispatch display labels — 2026-07
+  - Dispatch display labels — persona amendment — 2026-07
+  - Dispatch display labels — task-name amendment — 2026-07-18
+  - Dispatch display labels — role-label amendment — 2026-07-18
+  - Dispatch display labels — mobile-pair amendment — 2026-07-21
+- Telemetry vocabulary — 2026-07
+  - Token capture — 2026-07-19 (fg-a10212)
+- Routing-tuning recommendations (Evolve analogue) — 2026-07
+- Verifier-finding filter (bounce pre-check) — 2026-07
+  - Ship-judge widening + Critical-security exploit bar — 2026-07-18
+- Inquest tribunal — 2026-07
+- Idle-wait discipline — 2026-07
+  - Idle-wait discipline — watchdog amendment — 2026-07-20
+  - Idle-wait discipline — cold-cache dispatch note — 2026-07-20
+- Watchdog thresholds — 2026-07-20
+  - Supervised sequential dispatch — 2026-07-24 (owner-directed)
+- Benchmark-ratified routing — 2026-07-20 (fg-a10408)
+- Grouped verification — 2026-07-20 (human-ratified)
+- Provider dispatch checkpoints — 2026-07-22 (owner-ratified)
+- Architect-plan refuter — 2026-07
+- Design foundation artifact (`.forge/design/foundation.md`) — 2026-07-18
+- Design-conformance elevation (Iris) — 2026-07-18
+- Sharded fan-out — 2026-07-18
+  - Sharded fan-out — per-shard write surfaces amendment (2026-07-19, fg-b0401)
+- Grud routing (goblin grunt) — 2026-07-18
+- Verification economics — 2026-07-18 (fg-a10901)
+- Verification infrastructure — 2026-07-18 (fg-a10908)
+- Clean-context debug escalation — 2026-07-18 (fg-a10701)
+- Spec-time boundary maps — 2026-07-18 (fg-a10910)
+- Finding severity + confidence — 2026-07-18 (fg-a10911)
+- External-provider dispatch rules — 2026-07-19 (fg-c0112, spec-e8a3)
+- Marginal-gain stop rules — 2026-07-22 (human-ratified)
+- Customization persistence contract — 2026-07-18 (fg-b0101)
+- Operator-profile container format — 2026-07-18 (fg-b0103, spec-4d2a)
+- Operator profile system — 2026-07-18 (fg-b0104, spec-4d2a)
+- Plugin lifecycle: uninstall + rollback — 2026-07-20
+- Onboard-offer nudge hook — 2026-07-20
+- Mobile routing (forge-mobile pair) — 2026-07-21
+  - Mobile routing — RN-web ruling — 2026-07-21
+- Sensitive-domain build carve-out — 2026-07-22 (owner-directed)
+- Codex native skill discovery — optional registration (codex-skill-loading, 2026-07-21)
+- Per-provider dispatch toggles (`forge.md` Providers section) — 2026-07-21 (provider-toggles)
+  - Providers Feature — per-repo opt-in and per-provider trust gate — 2026-07-19 (fg-c0103, spec-e8a3) (also amends Features (forge.md), above)
+- Settings schema registry — one canonical place — 2026-07-21 (settings-system-depth)
+- Provider dispatch labels — 2026-07-22
+- Consensus escalation labels — 2026-07-22
+- Consensus rollout telemetry — 2026-07-22
+- Project scope guard — 2026-07-20 (project-scope-guard)
+- Attribute routing matrices — 2026-07-22 (spec cross-model-consensus)
+- Startup banner removed — 2026-07-22 (owner-directed)
+- max-parallel-tasks: auto default — 2026-07-23 (owner-directed)
+- Task|Agent PreToolUse hook consolidation — 2026-07-23
+- Blast-radius gate — 2026-07-23 (owner-directed)
+- Parallel-first dispatch — 2026-07-23 (owner-directed)
+- No-worktree degraded mode — 2026-07-24 (owner-directed)
+
+### Shards manifest
+
+Every section body now lives in one of the shard files below (`docs/conventions/<shard>.md`); this file is the index only — preamble, TOC (above), and this manifest. Each line maps one section name (as it appears in the TOC above) to the shard file holding its body. A section nested under two TOC parents (a multi-parent amendment) lists only the ONE shard holding its body — the secondary TOC parent is a name-only pointer, not a second copy.
+
+- `.forge/ layout (Phase 1 subset)` -> `docs/conventions/artifact-formats.md`
+- `Task files` -> `docs/conventions/artifact-formats.md`
+- `forge.md (project config)` -> `docs/conventions/config-and-features.md`
+- `Repo map files (`.forge/map/`) — Phase 2` -> `docs/conventions/artifact-formats.md`
+- `Project memory files (`.forge/memory/`) — Phase 2` -> `docs/conventions/memory.md`
+- `Spec files (Phase 3)` -> `docs/conventions/artifact-formats.md`
+- `constitution.md (Phase 3)` -> `docs/conventions/artifact-formats.md`
+- `project.md (project charter)` -> `docs/conventions/artifact-formats.md`
+- `.forge/agents/ (project-local agents)` -> `docs/conventions/agents-lifecycle.md`
+- `Trust boundary` -> `docs/conventions/trust-and-security.md`
+- `Offline merge convention` -> `docs/conventions/artifact-formats.md`
+- `Readable task ids — 2026-07-20` -> `docs/conventions/artifact-formats.md`
+- `Multi-operator coordination — 2026-07-20` -> `docs/conventions/artifact-formats.md`
+- `Optional task fields — 2026-07-22 (phase2-external-workers)` -> `docs/conventions/artifact-formats.md`
+- `schema-version` -> `docs/conventions/artifact-formats.md`
+- `Asking the user questions (interactive skills)` -> `docs/conventions/config-and-features.md`
+- `Parallel dispatch (Waves amendment, 2026-07-17)` -> `docs/conventions/artifact-formats.md`
+- `Claims and crash recovery — amendment (2026-07-17)` -> `docs/conventions/artifact-formats.md`
+- `Budget keys — amendment (2026-07-17)` -> `docs/conventions/config-and-features.md`
+- `Budget keys — amendment (2026-07-19): provider dispatch cap (fg-c0113, spec-e8a3)` -> `docs/conventions/config-and-features.md`
+- `Features (forge.md)` -> `docs/conventions/config-and-features.md`
+- `Loop patterns` -> `docs/conventions/dispatch-and-routing.md`
+- `Workflow executor` -> `docs/conventions/dispatch-and-routing.md`
+- `Run charter (2026-07-17)` -> `docs/conventions/dispatch-and-routing.md`
+- `Model vocabulary — fable amendment (2026-07-17)` -> `docs/conventions/dispatch-and-routing.md`
+- `Memory — agents tag + craft memory (2026-07-17)` -> `docs/conventions/memory.md`
+- `Trust boundary — specs + NL scoping amendment (2026-07-17)` -> `docs/conventions/trust-and-security.md`
+- `Report tasks (finder pattern) — 2026-07-17` -> `docs/conventions/dispatch-and-routing.md`
+- `UI+motion task splitting, empty-repo gates-pending, and finder dispatch — 2026-07-18` -> `docs/conventions/dispatch-and-routing.md`
+- `Prefer the agent factory over ad hoc generic dispatch — 2026-07-19` -> `docs/conventions/dispatch-and-routing.md`
+- `Freshness convention (date-sensitive skills) — 2026-07-18` -> `docs/conventions/config-and-features.md`
+- `Capability-gap audits (equip) — 2026-07` -> `docs/conventions/config-and-features.md`
+- `Latency rules — ship-review overlap, mechanical bounces, batch gates, sliding-window dispatch — 2026-07` -> `docs/conventions/dispatch-and-routing.md`
+- `Low-risk verification (standard sub-class) — 2026-07` -> `docs/conventions/verification.md`
+- `Dispatch display labels — 2026-07` -> `docs/conventions/telemetry-and-labels.md`
+- `Dispatch display labels — persona amendment — 2026-07` -> `docs/conventions/telemetry-and-labels.md`
+- `Dispatch display labels — task-name amendment — 2026-07-18` -> `docs/conventions/telemetry-and-labels.md`
+- `Dispatch display labels — role-label amendment — 2026-07-18` -> `docs/conventions/telemetry-and-labels.md`
+- `Dispatch display labels — mobile-pair amendment — 2026-07-21` -> `docs/conventions/telemetry-and-labels.md`
+- `Telemetry vocabulary — 2026-07` -> `docs/conventions/telemetry-and-labels.md`
+- `Routing-tuning recommendations (Evolve analogue) — 2026-07` -> `docs/conventions/telemetry-and-labels.md`
+- `Verifier-finding filter (bounce pre-check) — 2026-07` -> `docs/conventions/verification.md`
+- `Craft-memory bleed check — 2026-07` -> `docs/conventions/memory.md`
+- `Inquest tribunal — 2026-07` -> `docs/conventions/verification.md`
+- `Ship-judge widening + Critical-security exploit bar — 2026-07-18` -> `docs/conventions/verification.md`
+- `Idle-wait discipline — 2026-07` -> `docs/conventions/verification.md`
+- `Idle-wait discipline — watchdog amendment — 2026-07-20` -> `docs/conventions/verification.md`
+- `Idle-wait discipline — cold-cache dispatch note — 2026-07-20` -> `docs/conventions/verification.md`
+- `Watchdog thresholds — 2026-07-20` -> `docs/conventions/verification.md`
+- `Benchmark-ratified routing — 2026-07-20 (fg-a10408)` -> `docs/conventions/verification.md`
+- `Grouped verification — 2026-07-20 (human-ratified)` -> `docs/conventions/verification.md`
+- `Provider dispatch checkpoints — 2026-07-22 (owner-ratified)` -> `docs/conventions/config-and-features.md`
+- `Architect-plan refuter — 2026-07` -> `docs/conventions/verification.md`
+- `Design foundation artifact (`.forge/design/foundation.md`) — 2026-07-18` -> `docs/conventions/design.md`
+- `Design-conformance elevation (Iris) — 2026-07-18` -> `docs/conventions/design.md`
+- `Sharded fan-out — 2026-07-18` -> `docs/conventions/dispatch-and-routing.md`
+- `Sharded fan-out — per-shard write surfaces amendment (2026-07-19, fg-b0401)` -> `docs/conventions/dispatch-and-routing.md`
+- `Grud routing (goblin grunt) — 2026-07-18` -> `docs/conventions/dispatch-and-routing.md`
+- `Verification economics — 2026-07-18 (fg-a10901)` -> `docs/conventions/verification.md`
+- `Verification infrastructure — 2026-07-18 (fg-a10908)` -> `docs/conventions/verification.md`
+- `Clean-context debug escalation — 2026-07-18 (fg-a10701)` -> `docs/conventions/verification.md`
+- `Spec-time boundary maps — 2026-07-18 (fg-a10910)` -> `docs/conventions/verification.md`
+- `Finding severity + confidence — 2026-07-18 (fg-a10911)` -> `docs/conventions/verification.md`
+- `Providers Feature — per-repo opt-in and per-provider trust gate — 2026-07-19 (fg-c0103, spec-e8a3)` -> `docs/conventions/config-and-features.md`
+- `Per-provider trust confirmation — 2026-07-19 (fg-c0103, spec-e8a3)` -> `docs/conventions/trust-and-security.md`
+- `Provider dispatch security rules — 2026-07-19 (fg-c0112, spec-e8a3)` -> `docs/conventions/trust-and-security.md`
+- `External-provider dispatch rules — 2026-07-19 (fg-c0112, spec-e8a3)` -> `docs/conventions/verification.md`
+- `Marginal-gain stop rules — 2026-07-22 (human-ratified)` -> `docs/conventions/verification.md`
+- `Customization persistence contract — 2026-07-18 (fg-b0101)` -> `docs/conventions/config-and-features.md`
+- `Operator-profile container format — 2026-07-18 (fg-b0103, spec-4d2a)` -> `docs/conventions/config-and-features.md`
+- `Operator profile system — 2026-07-18 (fg-b0104, spec-4d2a)` -> `docs/conventions/config-and-features.md`
+- `Plugin lifecycle: uninstall + rollback — 2026-07-20` -> `docs/conventions/config-and-features.md`
+- `Token capture — 2026-07-19 (fg-a10212)` -> `docs/conventions/telemetry-and-labels.md`
+- `Ephemeral agent tier — 2026-07-19 (fg-b0301, spec-b71f3a)` -> `docs/conventions/agents-lifecycle.md`
+- `Universal Forge-agent dispatch — 2026-07-19 (fg-b0303, spec-b71f3a)` -> `docs/conventions/dispatch-and-routing.md`
+- `Dispatch-provenance flag — 2026-07-19 (fg-b0310, spec-b71f3a)` -> `docs/conventions/dispatch-and-routing.md`
+- `Agent promotion and retention — 2026-07-19 (fg-b0305+fg-b0306, spec-b71f3a)` -> `docs/conventions/agents-lifecycle.md`
+- `Onboard-offer nudge hook — 2026-07-20` -> `docs/conventions/dispatch-and-routing.md`
+- `Mobile routing (forge-mobile pair) — 2026-07-21` -> `docs/conventions/dispatch-and-routing.md`
+- `Mobile routing — RN-web ruling — 2026-07-21` -> `docs/conventions/dispatch-and-routing.md`
+- `Sensitive-domain build carve-out — 2026-07-22 (owner-directed)` -> `docs/conventions/dispatch-and-routing.md`
+- `Codex native skill discovery — optional registration (codex-skill-loading, 2026-07-21)` -> `docs/conventions/config-and-features.md`
+- `Per-provider dispatch toggles (`forge.md` Providers section) — 2026-07-21 (provider-toggles)` -> `docs/conventions/config-and-features.md`
+- `Settings schema registry — one canonical place — 2026-07-21 (settings-system-depth)` -> `docs/conventions/config-and-features.md`
+- `Provider dispatch labels — 2026-07-22` -> `docs/conventions/telemetry-and-labels.md`
+- `Consensus escalation labels — 2026-07-22` -> `docs/conventions/telemetry-and-labels.md`
+- `Project scope guard — 2026-07-20 (project-scope-guard)` -> `docs/conventions/trust-and-security.md`
+- `Attribute routing matrices — 2026-07-22 (spec cross-model-consensus)` -> `docs/conventions/dispatch-and-routing.md`
+
+- `Consensus rollout telemetry — 2026-07-22` -> `docs/conventions/telemetry-and-labels.md`
+- `Project scope guard — 2026-07-20 (project-scope-guard)` -> `docs/conventions/trust-and-security.md`
+- `Startup banner removed — 2026-07-22 (owner-directed)` -> `docs/conventions/config-and-features.md`
+- `max-parallel-tasks: auto default — 2026-07-23 (owner-directed)` -> `docs/conventions/config-and-features.md`
+- `Task|Agent PreToolUse hook consolidation — 2026-07-23` -> `docs/conventions/dispatch-and-routing.md`
+- `Blast-radius gate — 2026-07-23 (owner-directed)` -> `docs/conventions/verification.md`
+- `Parallel-first dispatch — 2026-07-23 (owner-directed)` -> `docs/conventions/verification.md`
+- `No-worktree degraded mode — 2026-07-24 (owner-directed)` -> `docs/conventions/dispatch-and-routing.md`
+- `Supervised sequential dispatch — 2026-07-24 (owner-directed)` -> `docs/conventions/verification.md`

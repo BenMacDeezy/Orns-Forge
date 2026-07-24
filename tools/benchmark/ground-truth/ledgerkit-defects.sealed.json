@@ -1,0 +1,76 @@
+{
+  "$schema_note": "Sealed ground-truth key for the ledgerkit fixture's planted defects (fg-a10401, design docs/plans/2026-07-18-ab-benchmark-design.md D1/D5). This file lives OUTSIDE tools/benchmark/fixture/ so no benchmark arm (A or B) ever sees it, and it must be excluded from every downstream spawn contract that touches the fixture (checklist authoring in T2, arm dispatch in T3/T6, the blinded auditor in T7) exactly like bench/keys/*.sealed.json is excluded from the auditor per D5. Consumed only by whoever authors the per-task frozen checklists (T2) -- never by an arm, never by the blinded auditor.",
+  "fixture": "ledgerkit",
+  "fixture_path": "tools/benchmark/fixture",
+  "sealed_at": "2026-07-18",
+  "task": "fg-a10401",
+  "defect_count": 5,
+  "defects": [
+    {
+      "id": "D-001",
+      "class": "logic",
+      "maps_to_design_task": "B1",
+      "location": "src/ledgerkit/money.py:split_evenly",
+      "root_cause": "share = total_cents // num_parts truncates; the remainder (total_cents % num_parts) is dropped instead of distributed, so sum(split_evenly(total_cents, n)) != total_cents whenever total_cents is not evenly divisible by n.",
+      "trigger_condition": "Any call where total_cents % num_parts != 0. Reached in practice via Ledger.split_expense, which will then raise ValueError from validate_balanced (payer entry is -total_cents, participant shares now sum to less than total_cents) rather than silently drifting -- the caller-visible symptom is an unexpected 'does not balance' crash on odd splits, not a quiet number.",
+      "why_baseline_tests_miss_it": "tests/test_money.py::TestSplitEvenly and tests/test_ledger.py::TestSplitExpense only use evenly-divisible amounts (300/3, 200/2).",
+      "expected_correct_behavior": "The returned shares must always sum exactly to total_cents; conventionally the remainder cents are distributed one-per-share to the first `total_cents % num_parts` entries (largest-remainder / round-robin allocation)."
+    },
+    {
+      "id": "D-002",
+      "class": "edge-case",
+      "maps_to_design_task": "B2",
+      "location": "src/ledgerkit/ledger.py:Ledger.transactions_between",
+      "root_cause": "Implementation filters with `since <= t.date < until` (strict on the upper bound) while the method's own docstring promises both endpoints are inclusive.",
+      "trigger_condition": "Any query where a transaction's date equals `until` exactly.",
+      "why_baseline_tests_miss_it": "tests/test_ledger.py::TestTransactionsBetween always passes an `until` one day past the latest transaction date being queried for; no test uses until == an actual transaction date.",
+      "expected_correct_behavior": "`since <= t.date <= until` -- a transaction dated exactly `until` must be included."
+    },
+    {
+      "id": "D-003",
+      "class": "crash / missing-default (silent-failure family: works for the demo data, breaks the moment real-world input diverges from it)",
+      "maps_to_design_task": "B3",
+      "location": "src/ledgerkit/report.py:running_totals_by_category (and the module-level _KNOWN_CATEGORIES tuple)",
+      "root_cause": "`totals` and `series` are pre-seeded only from the hardcoded `_KNOWN_CATEGORIES = (\"food\", \"rent\", \"utilities\")` tuple. `totals[category] += entry.amount_cents` raises KeyError the first time it sees a category string that isn't one of those three, even though `Account.category` is a free-form field elsewhere in the codebase (accounts.py places no such restriction).",
+      "trigger_condition": "Posting any transaction that touches an account whose category is not exactly 'food', 'rent', or 'utilities', then calling running_totals_by_category.",
+      "why_baseline_tests_miss_it": "tests/test_report.py::TestRunningTotalsByCategory only posts to 'food' and asserts against 'food'/'rent', both in _KNOWN_CATEGORIES; the fixture's own chart fixture (tests/conftest.py) only defines those three categories plus one deliberately uncategorized account ('misc'), which the running-totals path never touches in the shipped tests.",
+      "expected_correct_behavior": "Should not assume a fixed category set -- use a defaultdict(int) / setdefault, or derive the known-categories set from the chart at call time, so any category present on an account is handled without crashing."
+    },
+    {
+      "id": "D-004",
+      "class": "silent-failure",
+      "maps_to_design_task": "none (fixture-original, not one of the design's named B1-B3 -- extra bug-fix-class material for a 3rd bug-fix task or scaling to 3/class)",
+      "location": "src/ledgerkit/report.py:category_totals",
+      "root_cause": "`if account.category is None: continue` -- entries posted to an account with no category are skipped with no warning, log line, or 'uncategorized' bucket.",
+      "trigger_condition": "Any transaction touching an account whose `category` is None (e.g. the 'checking' or 'misc' accounts in the shared test chart).",
+      "why_baseline_tests_miss_it": "tests/test_report.py::TestCategoryTotals only debits/credits 'rent' and 'food' (both categorized); it never posts to an uncategorized account and never cross-checks category_totals()'s sum against report.total_balance() or account_balances(), so the silent gap is never surfaced.",
+      "expected_correct_behavior": "Uncategorized entries should either be bucketed under an explicit 'uncategorized' key or the function should document/assert that every touched account must be categorized -- either way the sum of category_totals().values() should be reconcilable against total_balance(), not silently short of it."
+    },
+    {
+      "id": "D-005",
+      "class": "doc-drift",
+      "maps_to_design_task": "D1 (README usage vs current CLI/API; two renamed identifiers, one broken cross-reference, one stale example)",
+      "location": "README.md",
+      "facets": [
+        {
+          "facet": "renamed-method",
+          "detail": "README's Quick start example calls `checking.get_balance()`; the actual method on Account is `.balance()`. There has never been a `get_balance` method in this codebase -- the name in the README is simply stale/wrong, not a real deprecated alias."
+        },
+        {
+          "facet": "renamed-parameters",
+          "detail": "README's 'Date-range queries' section shows `ledger.transactions_between(start=date(...), end=date(...))`; the actual Ledger.transactions_between signature is `(since, until)`. Calling the README's example verbatim raises TypeError (unexpected keyword argument)."
+        },
+        {
+          "facet": "broken-cross-reference",
+          "detail": "README says 'See `docs/architecture.md` for the module layout and design rationale.' -- no docs/ directory exists anywhere in the fixture."
+        },
+        {
+          "facet": "stale-example-output",
+          "detail": "The Quick start example posts entries of 120000 cents (i.e. -1200.00 on checking) but the comment claims the printed balance is `-1000.00`. Actual output of format_cents(checking.balance()) for that example is `-1200.00`."
+        }
+      ],
+      "why_baseline_tests_miss_it": "README.md prose/examples are not executed by the test suite (the Quick start block is illustrative markdown, not a doctest).",
+      "expected_correct_behavior": "README examples should use current method/parameter names, link only to files that exist, and print output that matches what running the example code actually produces."
+    }
+  ]
+}
