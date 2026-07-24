@@ -1,0 +1,10 @@
+flowchart TD
+    PLAN["clarified plan"] --> C1["single refuter pass: C1"]
+    C1 --> REJECT{"P0/P1 REJECT?"}
+    REJECT -->|no| CONSENSUS["consensus at C1"]
+    REJECT -->|yes| REVISE["Claude revises"] --> C2["one final critique: C2"]
+    C2 --> SETTLED{"P0/P1 REJECT remains?"}
+    SETTLED -->|no| CONSENSUS2["consensus at C2"]
+    SETTLED -->|yes| CAPOUT["cap-out"] --> HUMAN["human resolves each dispute"] --> APPROVAL["human approval gate"]
+    CONSENSUS --> APPROVAL
+    CONSENSUS2 --> APPROVAL

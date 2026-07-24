@@ -1,0 +1,6 @@
+{
+  "name": "some-tool-config",
+  "type": "webhook",
+  "endpoint": "https://example.invalid/hook",
+  "retries": 3
+}
